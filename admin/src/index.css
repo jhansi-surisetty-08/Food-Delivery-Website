@@ -7,9 +7,27 @@
     font-family: Outfit;
   }
 
+  :root{
+    --bg-color: #fcfcfc;
+    --text-color: #1f2937;
+    --muted-border: #a9a9a9;
+    --panel-bg: #ffffff;
+    --panel-soft: #f9f9f9;
+  }
+
+  body[data-theme="dark"]{
+    --bg-color: #0f172a;
+    --text-color: #e5e7eb;
+    --muted-border: #334155;
+    --panel-bg: #111827;
+    --panel-soft: #1f2937;
+  }
+
   body{
     min-height: 100vh;
-    background-color: #fcfcfc;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    transition: background-color 0.2s ease, color 0.2s ease;
   }
 
   a{
@@ -20,11 +38,20 @@
 hr{
     border: none;
     height: 1px;
-    background-color: #a9a9a9;
+  background-color: var(--muted-border);
 }
 
 .app-content{
   display: flex;
+}
+
+.app-loading-screen{
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  font-size: 18px;
+  font-weight: 600;
 }
 
 .flex-col{

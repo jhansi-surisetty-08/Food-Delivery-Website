@@ -1,0 +1,63 @@
+.users-search{
+  max-width: 420px;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+}
+
+.users-table{
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.users-row{
+  display: grid;
+  grid-template-columns: 1.2fr 1.8fr 0.8fr 1fr 1.2fr;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 13px;
+}
+
+.users-title{
+  background: #f9fafb;
+}
+
+.users-actions{
+  display: flex;
+  gap: 8px;
+}
+
+.users-actions button{
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #fff;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+.users-actions .danger{
+  border-color: #f87171;
+  color: #b91c1c;
+}
+
+body[data-theme="dark"] .users-search,
+body[data-theme="dark"] .users-table,
+body[data-theme="dark"] .users-row,
+body[data-theme="dark"] .users-actions button{
+  background: #111827;
+  color: #e5e7eb;
+  border-color: #374151;
+}
+
+body[data-theme="dark"] .users-title{
+  background: #1f2937;
+}
+
+@media (max-width: 900px){
+  .users-row{
+    grid-template-columns: 1fr;
+  }
+}

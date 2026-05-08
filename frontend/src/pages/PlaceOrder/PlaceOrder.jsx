@@ -5,7 +5,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
 const PlaceOrder = () => {
-  const {getTotalCartAmount, token, food_list, cartItems, url} = useContext(StoreContext);
+  const {getTotalCartAmount, token, allFoods, cartItems, url} = useContext(StoreContext);
 
   const [data, setData] = useState({
     firstName:"",
@@ -18,6 +18,10 @@ const PlaceOrder = () => {
     country:"",
     phone:""
   });
+  const [deliveryLocation, setDeliveryLocation] = useState(null);
+  const [isPaying, setIsPaying] = useState(false);
+  const [paymentError, setPaymentError] = useState("");
+  const [pendingOrder, setPendingOrder] = useState(null);
 
   const onChangeHandler = (event) =>{
     const name = event.target.name;
@@ -25,29 +29,166 @@ const PlaceOrder = () => {
     setData(data =>({...data,[name]:value}))
   }
 
-  const placeOrder = async (event) =>{
-    event.preventDefault();
-    let orderItems = [];
-    food_list.map((item, index)=>{
-      if(cartItems[item._id]>0){
-        let itemInfo = item;
-        itemInfo["quantity"] = cartItems[item._id];
-        orderItems.push(itemInfo);
-      }
-    })
-    let orderData = {
-      address:data,
-      items:orderItems,
-      amount:getTotalCartAmount()+2,
+  const loadRazorpayScript = () =>
+    new Promise((resolve) => {
+      if (window.Razorpay) return resolve(true);
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+
+  const openRazorpayCheckout = async (paymentData) => {
+    const loaded = await loadRazorpayScript();
+    if (!loaded) {
+      setPaymentError("Failed to load payment gateway");
+      setIsPaying(false);
+      return;
     }
 
-    let response = await axios.post(url+'/api/order/place', orderData,{headers:{token}})
-    if(response.data.success){
-      const {session_url} = response.data;
-      window.location.replace(session_url);
+    const options = {
+      key: paymentData.key_id,
+      amount: paymentData.amount,
+      currency: paymentData.currency,
+      name: "Food Delivery",
+      description: "Order Payment",
+      order_id: paymentData.razorpayOrderId,
+      handler: async (res) => {
+        try {
+          const verifyResponse = await axios.post(
+            url + "/api/order/verify",
+            {
+              orderId: paymentData.orderId,
+              razorpay_order_id: res.razorpay_order_id,
+              razorpay_payment_id: res.razorpay_payment_id,
+              razorpay_signature: res.razorpay_signature,
+            },
+            { headers: { token } }
+          );
+          if (verifyResponse.data.success) {
+            navigate("/payment-success", { state: { orderId: paymentData.orderId } });
+          } else {
+            navigate("/payment-failed", { state: { orderId: paymentData.orderId, reason: verifyResponse.data.message || "Payment verification failed" } });
+          }
+        } catch (err) {
+          navigate("/payment-failed", { state: { orderId: paymentData.orderId, reason: "Payment verification failed" } });
+        } finally {
+          setIsPaying(false);
+        }
+      },
+      prefill: {
+        name: `${data.firstName} ${data.lastName}`,
+        email: data.email,
+        contact: data.phone,
+      },
+      modal: {
+        ondismiss: async () => {
+          try {
+            await axios.post(
+              url + "/api/order/payment-failed",
+              {
+                orderId: paymentData.orderId,
+                razorpay_order_id: paymentData.razorpayOrderId,
+                reason: "Payment cancelled by user",
+              },
+              { headers: { token } }
+            );
+          } catch (err) {
+          } finally {
+            setPendingOrder({ orderId: paymentData.orderId });
+            setPaymentError("Payment cancelled. You can retry payment.");
+            setIsPaying(false);
+          }
+        },
+      },
+      theme: { color: "#8b5cf6" },
+    };
+
+    const rzp = new window.Razorpay(options);
+    rzp.on("payment.failed", async (res) => {
+      try {
+        await axios.post(
+          url + "/api/order/payment-failed",
+          {
+            orderId: paymentData.orderId,
+            razorpay_order_id: paymentData.razorpayOrderId,
+            reason: res?.error?.description || "Payment failed",
+          },
+          { headers: { token } }
+        );
+      } catch (err) {
+      } finally {
+        setPendingOrder({ orderId: paymentData.orderId });
+        navigate("/payment-failed", { state: { orderId: paymentData.orderId, reason: res?.error?.description || "Payment failed" } });
+        setIsPaying(false);
+      }
+    });
+    rzp.open();
+  };
+
+  const retryPendingPayment = async () => {
+    if (!pendingOrder?.orderId || isPaying) return;
+    setPaymentError("");
+    try {
+      setIsPaying(true);
+      const response = await axios.post(
+        url + "/api/order/retry-payment",
+        { orderId: pendingOrder.orderId },
+        { headers: { token } }
+      );
+
+      if (!response.data.success) {
+        setPaymentError(response.data.message || "Retry payment failed");
+        setIsPaying(false);
+        return;
+      }
+
+      await openRazorpayCheckout(response.data);
+    } catch (error) {
+      setPaymentError(error?.response?.data?.message || "Retry payment failed");
+      setIsPaying(false);
     }
-    else{
-      alert('Error')
+  };
+
+  const placeOrder = async (event) =>{
+    event.preventDefault();
+    setPaymentError("");
+    try {
+      setIsPaying(true);
+      let orderItems = [];
+      allFoods.map((item, index)=>{
+        if(cartItems[item._id]>0){
+          let itemInfo = item;
+          itemInfo["quantity"] = cartItems[item._id];
+          orderItems.push(itemInfo);
+        }
+      })
+      let orderData = {
+        address:data,
+        items:orderItems,
+        amount:getTotalCartAmount()+2,
+        deliveryLocation: deliveryLocation || undefined,
+      }
+
+      if (!orderItems.length) {
+        setPaymentError("Your cart is empty");
+        setIsPaying(false);
+        return;
+      }
+
+      const response = await axios.post(url+'/api/order/place', orderData,{headers:{token}})
+      if(response.data.success && response.data.razorpayOrderId){
+        setPendingOrder({ orderId: response.data.orderId });
+        await openRazorpayCheckout(response.data);
+      }
+      else{
+        setPaymentError(response.data.message || 'Error starting payment')
+        setIsPaying(false);
+      }
+    } catch (error) {
+      setPaymentError(error?.response?.data?.message || 'Error starting payment')
+      setIsPaying(false);
     }
   }
 
@@ -60,6 +201,22 @@ const PlaceOrder = () => {
       navigate('/cart')
     }
   },[token])
+
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setDeliveryLocation({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        });
+      },
+      () => {
+        setDeliveryLocation(null);
+      },
+      { enableHighAccuracy: true, timeout: 8000 }
+    );
+  }, []);
 
   return (
     <form onSubmit={placeOrder} className='place-order'>
@@ -100,7 +257,15 @@ const PlaceOrder = () => {
               <b>${getTotalCartAmount()===0?0:getTotalCartAmount()+2}</b>
             </div> 
           </div>
-          <button type='submit'>PROCEED TO PAYMENT</button>
+          {paymentError ? <p className="payment-error">{paymentError}</p> : null}
+          <button type='submit' disabled={isPaying}>
+            {isPaying ? "Processing..." : "PAY NOW"}
+          </button>
+          {pendingOrder?.orderId ? (
+            <button type='button' disabled={isPaying} onClick={retryPendingPayment}>
+              {isPaying ? "Processing..." : "RETRY PAYMENT"}
+            </button>
+          ) : null}
         </div>
       </div>
     </form>

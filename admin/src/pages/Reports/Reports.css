@@ -1,0 +1,12 @@
+.report-grid{ display:grid; grid-template-columns:1fr; gap:12px; }
+.report-card{ border:1px solid #d1d5db; border-radius:10px; background:#fff; padding:10px; }
+.chart-wrap{ width:100%; height:270px; }
+.table-wrap{ overflow-x:auto; }
+.table-wrap table{ width:100%; border-collapse:collapse; }
+.table-wrap th,.table-wrap td{ border-bottom:1px solid #e5e7eb; padding:8px; text-align:left; }
+
+body[data-theme="dark"] .report-card,
+body[data-theme="dark"] .table-wrap th,
+body[data-theme="dark"] .table-wrap td{ background:#111827; color:#e5e7eb; border-color:#374151; }
+
+@media (min-width: 1000px){ .report-grid{ grid-template-columns: 1fr 1fr; } }

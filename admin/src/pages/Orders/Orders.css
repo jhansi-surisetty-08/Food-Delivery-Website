@@ -30,6 +30,183 @@
     outline: none;
 }
 
+.order-actions{
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.details-btn{
+    border: 1px solid #cbd5e1;
+    background: #fff;
+    border-radius: 6px;
+    padding: 6px 10px;
+    cursor: pointer;
+}
+
+.payment-status-row{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.payment-badge{
+    font-size: 12px;
+    border-radius: 999px;
+    padding: 2px 8px;
+    text-transform: capitalize;
+}
+
+.payment-badge.success{
+    background: #dcfce7;
+    color: #166534;
+}
+
+.payment-badge.failed{
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.payment-badge.pending{
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.driver-sim{
+    border: 1px dashed #ff8b7a;
+    padding: 16px;
+    border-radius: 10px;
+    margin: 20px 0;
+    background: #fff7f5;
+}
+
+.driver-sim h4{
+    margin-bottom: 10px;
+}
+
+.driver-fields{
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 10px;
+}
+
+.driver-fields input{
+    padding: 8px 10px;
+    border: 1px solid #f1b3a6;
+    border-radius: 6px;
+    outline: none;
+}
+
+.driver-sim button{
+    margin-top: 12px;
+    border: none;
+    padding: 8px 14px;
+    background: tomato;
+    color: white;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.payment-list{
+    margin-top: 30px;
+}
+
+.payment-item{
+    border: 1px solid #eee;
+    padding: 12px 14px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    font-size: 13px;
+    color: #444;
+    background: #fff;
+}
+
+.order-modal-overlay{
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.order-modal{
+    width: min(760px, 94vw);
+    background: #fff;
+    border-radius: 12px;
+    padding: 16px;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.order-modal-header{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.order-modal-header button{
+    border: none;
+    background: #ef4444;
+    color: #fff;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.order-modal-grid{
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.order-modal-section{
+    margin-top: 12px;
+}
+
+.order-modal-section ul{
+    margin-top: 6px;
+    padding-left: 18px;
+}
+
+body[data-theme="dark"] .order-item{
+    color: #e5e7eb;
+    border-color: #fb7185;
+    background: #111827;
+}
+
+body[data-theme="dark"] .details-btn,
+body[data-theme="dark"] .order-modal{
+    background: #111827;
+    color: #e5e7eb;
+    border-color: #374151;
+}
+
+body[data-theme="dark"] .order-modal-header button{
+    background: #dc2626;
+}
+
+body[data-theme="dark"] .driver-sim{
+    background: #1f2937;
+    border-color: #f97316;
+}
+
+body[data-theme="dark"] .driver-fields input{
+    background: #0f172a;
+    color: #e5e7eb;
+    border-color: #374151;
+}
+
+body[data-theme="dark"] .payment-item{
+    background: #111827;
+    color: #e5e7eb;
+    border-color: #374151;
+}
+
 @media (max-width:1000px){
     .order-item{
         font-size: 12px;

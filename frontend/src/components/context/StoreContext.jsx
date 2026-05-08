@@ -1,16 +1,47 @@
-import { createContext, useEffect, useState } from "react";
+import { createContext, useCallback, useEffect, useState } from "react";
 import axios from "axios";
 import { food_list as initialFoodList } from "../../assets/assets";
 import { fetchFoodFromAPI } from "../../utils/mealdbAPI";
 
 export const StoreContext = createContext(null);
 
+const DYNAMIC_FOOD_STORAGE_KEY = "dynamic-food-catalog";
+
+const readDynamicFoods = () => {
+  try {
+    const raw = localStorage.getItem(DYNAMIC_FOOD_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (error) {
+    console.log("Dynamic food catalog restore failed", error);
+    return [];
+  }
+};
+
+const persistDynamicFoods = (items) => {
+  try {
+    localStorage.setItem(DYNAMIC_FOOD_STORAGE_KEY, JSON.stringify(items));
+  } catch (error) {
+    console.log("Dynamic food catalog persist failed", error);
+  }
+};
+
+const mergeFoodLists = (baseList, nextList) => {
+  const map = new Map(baseList.map((item) => [item._id, item]));
+  nextList.forEach((item) => {
+    map.set(item._id, { ...map.get(item._id), ...item });
+  });
+  return Array.from(map.values());
+};
+
+const baseFoodIds = new Set(initialFoodList.map((item) => item._id));
+
 const StoreContextProvider = (props) => {
   const [cartItems, setCartItems] = useState({});
+
   const enrichFoods = (list) => {
     return list.map((item, idx) => ({
       ...item,
-      rating: item.rating ?? (Math.floor(Math.random() * 3) + 3), // 3-5
+      rating: item.rating ?? (Math.floor(Math.random() * 3) + 3),
       quantity: item.quantity ?? (Math.floor(Math.random() * 50) + 1),
       createdAt: item.createdAt ?? new Date(Date.now() - idx * 86400000).toISOString(),
     }));
@@ -20,8 +51,8 @@ const StoreContextProvider = (props) => {
   const [filteredFoodList, setFilteredFoodList] = useState(enrichFoods(initialFoodList));
   const [isLoadingAPI, setIsLoadingAPI] = useState(false);
   const [userInfo, setUserInfo] = useState(null);
-  
-  const url = "http://localhost:4000";
+
+  const url = import.meta.env.VITE_API_URL || "http://localhost:4001";
   const [token, setToken] = useState("");
   const [role, setRole] = useState("user");
 
@@ -55,7 +86,7 @@ const StoreContextProvider = (props) => {
     let totalAmount = 0;
     for (const item in cartItems) {
       if (cartItems[item] > 0) {
-        let itemInfo = foodList.find((product) => product._id === item);
+        const itemInfo = foodList.find((product) => product._id === item);
         if (itemInfo) {
           totalAmount += itemInfo.price * cartItems[item];
         }
@@ -66,19 +97,18 @@ const StoreContextProvider = (props) => {
 
   const fetchFoodList = async () => {
     try {
-      const response = await axios.get(url + "/api/food/list");
-      // Backend food list can be merged with initial list if available
+      await axios.get(url + "/api/food/list");
     } catch (error) {
       console.log("Backend food list not available, using default");
     }
   };
 
-  const loadCartData = async (token) => {
+  const loadCartData = async (activeToken) => {
     try {
       const response = await axios.post(
         url + "/api/cart/get",
         {},
-        { headers: { token } }
+        { headers: { token: activeToken } }
       );
       setCartItems(response.data.cartData || {});
     } catch (error) {
@@ -86,35 +116,53 @@ const StoreContextProvider = (props) => {
     }
   };
 
-  // Fetch additional food items from TheMealDB API
   const loadAdditionalFoods = async () => {
     try {
       setIsLoadingAPI(true);
-      const apiFoods = await fetchFoodFromAPI(15); // Fetch 15 additional items
-      
+      const apiFoods = await fetchFoodFromAPI(15);
+      const savedDynamicFoods = readDynamicFoods();
+
       if (apiFoods && apiFoods.length > 0) {
         const enrichedBase = enrichFoods(initialFoodList);
         const enrichedApi = enrichFoods(apiFoods);
         const combinedFoodList = [...enrichedBase, ...enrichedApi];
-        setFoodList(combinedFoodList);
+        setFoodList(mergeFoodLists(combinedFoodList, savedDynamicFoods));
         setFilteredFoodList(combinedFoodList);
-        console.log(`✓ Food list updated: ${initialFoodList.length} base + ${apiFoods.length} API = ${combinedFoodList.length} total`);
       } else {
         const enrichedBase = enrichFoods(initialFoodList);
-        setFoodList(enrichedBase);
+        setFoodList(mergeFoodLists(enrichedBase, savedDynamicFoods));
         setFilteredFoodList(enrichedBase);
       }
     } catch (error) {
       console.error("Error loading additional foods:", error);
       const enrichedBase = enrichFoods(initialFoodList);
-      setFoodList(enrichedBase);
+      setFoodList(mergeFoodLists(enrichedBase, readDynamicFoods()));
       setFilteredFoodList(enrichedBase);
     } finally {
       setIsLoadingAPI(false);
     }
   };
 
-  // Set filtered food list (for search and filters)
+  const registerDynamicFoods = useCallback((items) => {
+    if (!Array.isArray(items) || !items.length) {
+      return;
+    }
+
+    const normalizedItems = items.map((item) => ({
+      ...item,
+      rating: item.rating ?? 4.2,
+      quantity: item.quantity ?? 1,
+      createdAt: item.createdAt ?? new Date().toISOString(),
+    }));
+
+    setFoodList((previous) => {
+      const merged = mergeFoodLists(previous, normalizedItems);
+      const dynamicFoods = merged.filter((item) => !baseFoodIds.has(item._id));
+      persistDynamicFoods(dynamicFoods);
+      return merged;
+    });
+  }, []);
+
   const setSearchFilters = (filtered) => {
     setFilteredFoodList(filtered);
   };
@@ -122,18 +170,40 @@ const StoreContextProvider = (props) => {
   useEffect(() => {
     async function loadData() {
       await fetchFoodList();
-      await loadAdditionalFoods(); // Load API foods on mount
-
-      localStorage.removeItem("token");
-      localStorage.removeItem("role");
-      localStorage.removeItem("userInfo");
+      await loadAdditionalFoods();
     }
     loadData();
   }, []);
 
+  useEffect(() => {
+    const savedToken = localStorage.getItem("token") || sessionStorage.getItem("token") || "";
+    const savedRole = localStorage.getItem("role") || sessionStorage.getItem("role") || "user";
+    const savedUserInfo = localStorage.getItem("userInfo") || sessionStorage.getItem("userInfo");
+    if (savedToken) {
+      setToken(savedToken);
+      setRole(savedRole);
+      if (savedUserInfo) {
+        try {
+          setUserInfo(JSON.parse(savedUserInfo));
+        } catch {
+          setUserInfo(null);
+        }
+      }
+      loadCartData(savedToken);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (token) {
+      loadCartData(token);
+      return;
+    }
+    setCartItems({});
+  }, [token]);
+
   const contextValue = {
-    food_list: filteredFoodList, // Use filtered list for display
-    allFoods: foodList, // Keep all foods for reference
+    food_list: filteredFoodList,
+    allFoods: foodList,
     cartItems,
     setCartItems,
     addToCart,
@@ -146,8 +216,9 @@ const StoreContextProvider = (props) => {
     setRole,
     userInfo,
     setUserInfo,
-    setSearchFilters, // Function to update filters
-    isLoadingAPI, // Loading state for API calls
+    setSearchFilters,
+    isLoadingAPI,
+    registerDynamicFoods,
   };
 
   return (

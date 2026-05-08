@@ -1,6 +1,6 @@
 .list-table-format{
     display: grid;
-    grid-template-columns: 0.5fr 2fr 1fr 1fr 0.5fr;
+    grid-template-columns: 0.5fr 1.8fr 1fr 1fr 1.2fr 1.2fr;
     align-items: center;
     gap: 10px;
     padding: 12px 15px;
@@ -8,8 +8,90 @@
     font-size: 13px;
 }
 
+.food-search{
+    max-width: 460px;
+    padding: 10px 12px;
+    border: 1px solid #cacaca;
+    border-radius: 8px;
+}
+
+.actions{
+    display: flex;
+    gap: 8px;
+}
+
+.action-btn{
+    border: 1px solid #bbb;
+    background: #fff;
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.action-btn.delete{
+    border-color: #f87171;
+    color: #b91c1c;
+}
+
+.edit-form{
+    margin-top: 20px;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    padding: 14px;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.edit-grid{
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 8px;
+}
+
+.edit-grid input,
+.edit-grid select,
+.edit-form textarea{
+    padding: 8px 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+}
+
+.inline-check{
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.edit-actions{
+    display: flex;
+    gap: 8px;
+}
+
 .list-table-format.title{
     background-color: #f9f9f9;
+}
+
+body[data-theme="dark"] .list-table-format{
+    border-color: #374151;
+    background: #111827;
+    color: #e5e7eb;
+}
+
+body[data-theme="dark"] .list-table-format.title{
+    background-color: #1f2937;
+}
+
+body[data-theme="dark"] .food-search,
+body[data-theme="dark"] .edit-form,
+body[data-theme="dark"] .edit-grid input,
+body[data-theme="dark"] .edit-grid select,
+body[data-theme="dark"] .edit-form textarea,
+body[data-theme="dark"] .action-btn{
+    background: #111827;
+    color: #e5e7eb;
+    border-color: #374151;
 }
 
 .list-table-format img{

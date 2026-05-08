@@ -1,0 +1,13 @@
+.notify-form{ display:grid; gap:8px; max-width:700px; }
+.notify-form input, .notify-form select, .notify-form textarea, .notify-search{ padding:10px; border:1px solid #d1d5db; border-radius:8px; }
+.notify-form button{ border:1px solid #cbd5e1; border-radius:8px; background:#fff; cursor:pointer; padding:8px 10px; width:160px; }
+.notify-list{ display:grid; gap:8px; }
+.notify-card{ border:1px solid #e5e7eb; border-radius:10px; padding:10px; background:#fff; }
+.notify-type{ text-transform:capitalize; font-size:12px; color:#6366f1; }
+
+body[data-theme="dark"] .notify-form input,
+body[data-theme="dark"] .notify-form select,
+body[data-theme="dark"] .notify-form textarea,
+body[data-theme="dark"] .notify-search,
+body[data-theme="dark"] .notify-form button,
+body[data-theme="dark"] .notify-card{ background:#111827; color:#e5e7eb; border-color:#374151; }

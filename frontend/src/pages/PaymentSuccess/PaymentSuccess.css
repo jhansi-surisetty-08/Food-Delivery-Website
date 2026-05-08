@@ -1,0 +1,51 @@
+.payment-success{
+  min-height: 70vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 16px;
+}
+
+.payment-success-card{
+  width: min(520px, 90%);
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 28px;
+  text-align: center;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.12);
+  border: 1px solid rgba(139,92,246,0.2);
+}
+
+.payment-success-card h2{
+  margin-bottom: 10px;
+  color: #3b0764;
+}
+
+.payment-order-id{
+  margin-top: 8px;
+  font-size: 13px;
+  color: #6b6b6b;
+}
+
+.payment-actions{
+  margin-top: 20px;
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.payment-actions button{
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #8b5cf6, #a78bfa);
+  color: #fff;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.payment-actions button.secondary{
+  background: #f1f1f1;
+  color: #333;
+}

@@ -1,17 +1,17 @@
-import { useContext, useState } from "react";
+import { useContext } from "react";
 import "./Navbar.css";
 import { assets } from "../../assets/assets";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { StoreContext } from "../context/StoreContext";
 import { ThemeContext } from "../context/ThemeContext";
+import { getAvatarOption } from "../../utils/avatarOptions";
 
 const Navbar = () => {
-  const [menu, setMenu] = useState("home");
-
   const {
     getTotalCartAmount,
     token,
     setToken,
+    setCartItems,
     role,
     setRole,
     userInfo,
@@ -23,12 +23,19 @@ const Navbar = () => {
     useContext(ThemeContext);
 
   const navigate = useNavigate();
+  const location = useLocation();
+  const currentAvatar = getAvatarOption(userInfo?.avatar);
 
   const logout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("role");
     localStorage.removeItem("userInfo");
+    localStorage.removeItem("rememberMe");
+    sessionStorage.removeItem("token");
+    sessionStorage.removeItem("role");
+    sessionStorage.removeItem("userInfo");
     setToken("");
+    setCartItems({});
     setRole("user");
     setUserInfo(null);
     navigate("/");
@@ -41,10 +48,10 @@ const Navbar = () => {
       </Link>
 
       <ul className="navbar-menu">
-        <Link to="/" tabIndex={-1} onClick={() => setMenu("home")} className={menu === "home" ? "active" : ""}>home</Link>
-        <a href="#explore-menu" tabIndex={-1} onClick={() => setMenu("menu")} className={menu === "menu" ? "active" : ""}>menu</a>
-        <a href="#app-download" tabIndex={-1} onClick={() => setMenu("mobile-app")} className={menu === "mobile-app" ? "active" : ""}>mobile-app</a>
-        <a href="#footer" tabIndex={-1} onClick={() => setMenu("contact-us")} className={menu === "contact-us" ? "active" : ""}>contact us</a>
+        <Link to="/" tabIndex={-1} className={location.pathname === "/" ? "active" : ""}>home</Link>
+        <Link to="/menu" tabIndex={-1} className={location.pathname === "/menu" ? "active" : ""}>menu</Link>
+        <a href={location.pathname === "/" ? "#app-download" : "/#app-download"} tabIndex={-1}>mobile-app</a>
+        <a href={location.pathname === "/" ? "#footer" : "/#footer"} tabIndex={-1}>contact us</a>
       </ul>
 
       <div className="navbar-right">
@@ -66,7 +73,14 @@ const Navbar = () => {
         </div>
 
         <div className="navbar-profile">
-          <img src={assets.profile_icon} alt="" tabIndex={-1} />
+          <div
+            className="navbar-avatar"
+            style={{ background: currentAvatar.gradient }}
+            tabIndex={-1}
+            aria-hidden="true"
+          >
+            <span>{currentAvatar.emoji}</span>
+          </div>
           <ul className="nav-profile-dropdown">
             <li onClick={() => navigate("/myorders")}>
               <img src={assets.bag_icon} alt="" />

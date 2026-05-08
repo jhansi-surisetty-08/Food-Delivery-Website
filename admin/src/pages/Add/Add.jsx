@@ -1,4 +1,4 @@
-import React, {useState } from 'react'
+import React, {useEffect, useState } from 'react'
 import './Add.css'
 import { assets } from '../../assets/assets'
 import axios from 'axios'
@@ -7,12 +7,29 @@ import { toast } from 'react-toastify'
 const Add = ({url}) => {
 
     const [image, setImage] = useState(false);
+    const [categories, setCategories] = useState([]);
     const [data, setData] = useState({
         name:'',
         description:'',
         price:'',
-        category:'Salad'
+        category:'',
+        inStock:true,
+        stockCount:''
     })
+
+    const loadCategories = async () => {
+        try {
+            const response = await axios.get(`${url}/api/category/list`);
+            if (response.data.success) {
+                setCategories(response.data.data);
+                if (!data.category && response.data.data.length) {
+                    setData(prev => ({ ...prev, category: response.data.data[0].name }));
+                }
+            }
+        } catch (error) {
+            toast.error('Failed to load categories');
+        }
+    }
 
     const onChangeHandler = (event) =>{
         const name = event.target.name;
@@ -27,6 +44,8 @@ const Add = ({url}) => {
         formData.append('description', data.description)
         formData.append('price', Number(data.price))
         formData.append('category', data.category)
+        formData.append('inStock', data.inStock)
+        formData.append('stockCount', Number(data.stockCount || 0))
         formData.append('image', image)
         const response = await axios.post(`${url}/api/food/add`, formData);
 
@@ -35,7 +54,9 @@ const Add = ({url}) => {
                 name:'',
                 description:'',
                 price:'',
-                category:'Salad'
+                category: categories[0]?.name || '',
+                inStock:true,
+                stockCount:''
             })
             setImage(false);
             toast.success(response.data.message)
@@ -43,6 +64,10 @@ const Add = ({url}) => {
             toast.error(response.data.message)
         }
     }
+
+    useEffect(() => {
+        loadCategories();
+    }, []);
 
   return (
     <div className='add'>
@@ -66,19 +91,29 @@ const Add = ({url}) => {
                 <div className="add-category flex-col">
                     <p>Product category</p>
                     <select onChange={onChangeHandler}  name="category">
-                        <option value="Salad">Salad</option>
-                        <option value="Rolls">Rolls</option>
-                        <option value="Deserts">Deserts</option>
-                        <option value="Sandwich">Sandwich</option>
-                        <option value="Cake">Cake</option>
-                        <option value="Pure Veg">Pure Veg</option>
-                        <option value="Pasta">Pasta</option>
-                        <option value="Noodles">Noodles</option>
+                                                {categories.map((category) => (
+                                                    <option key={category._id} value={category.name}>{category.name}</option>
+                                                ))}
                     </select>
                 </div>
                 <div className="add-price flex-col">
                     <p>Product price</p>
                     <input onChange={onChangeHandler} value={data.price} type="number" name='price' placeholder='₹1000'/>
+                </div>
+                <div className="add-price flex-col">
+                    <p>Stock Count</p>
+                    <input onChange={onChangeHandler} value={data.stockCount} type="number" name='stockCount' placeholder='0'/>
+                </div>
+                <div className="add-stock-toggle flex-col">
+                    <p>Availability</p>
+                    <label className="stock-switch">
+                        <input
+                          type="checkbox"
+                          checked={Boolean(data.inStock)}
+                          onChange={(e)=>setData(prev=>({...prev,inStock:e.target.checked}))}
+                        />
+                        <span>{data.inStock ? 'In Stock' : 'Out of Stock'}</span>
+                    </label>
                 </div>
             </div>
             <button type='submit' className='add-btn'>ADD</button>
