@@ -1,4 +1,4 @@
-# 🍽️ Purple Food App — MERN Food Ordering Platform
+# 🍽️ Food Delivery App — MERN Food Ordering Platform
 
 An end-to-end food ordering platform built with the MERN stack, featuring a modern purple-themed UI, strict authentication flow, cart + order lifecycle, and an admin dashboard for operations.
 
@@ -136,15 +136,6 @@ Base URL: `http://localhost:4000/api`
 - `POST /order/place` → place order
 - `POST /order/userorders` → fetch user orders
 
----
-
-## 📬 Contact
-
-- Email: sample.foodapp@protonmail.com
-- Phone: +91 7987654321
-
----
-
 ## 🤝 Contributing
 
 Contributions are welcome and appreciated.
@@ -155,14 +146,7 @@ Contributions are welcome and appreciated.
 4. Push to the branch: `git push origin feat/amazing-feature`
 5. Open a Pull Request
 
-If you find this project useful, consider giving it a ⭐ — it really helps.
-
----
-
-## 👨‍💻 Credits
-
-- [Dulanjali Senarathna](https://github.com/DulanjaliSenarathna) — Project Owner
-- [prem2621](https://github.com/prem2621) — Bug fixes and improvements
+If you find this project useful, consider giving it a ⭐ — it really help 
 
 
 
